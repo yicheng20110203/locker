@@ -1,0 +1,14 @@
+etcd:
+  dailtimes: 5
+  servers:
+    - 127.0.0.1:2379
+
+redis:
+  dailtimes: 5
+  servers:
+    - 127.0.0.1:6379
+
+zookeeper:
+  dailtimes: 5
+  servers:
+    - 127.0.0.1:2181
