@@ -1,4 +1,4 @@
-package github.com/yicheng20110203/locker
+package locker
 
 const (
 	LockTypeZk = 1 << iota
