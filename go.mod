@@ -1,4 +1,4 @@
-module locker
+module github.com/yicheng20110203/locker
 
 go 1.14
 

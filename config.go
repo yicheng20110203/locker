@@ -1,4 +1,4 @@
-package locker
+package github.com/yicheng20110203/locker
 
 import (
 	log "github.com/sirupsen/logrus"

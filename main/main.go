@@ -2,7 +2,7 @@ package main
 
 import (
 	log "github.com/sirupsen/logrus"
-	"locker"
+	"github.com/yicheng20110203/locker"
 	"time"
 )
 
