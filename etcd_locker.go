@@ -2,12 +2,11 @@ package locker
 
 import (
 	"context"
-	"errors"
 	"github.com/coreos/etcd/clientv3"
 	log "github.com/sirupsen/logrus"
 )
 
-type EtcdMutex struct {
+type EtcdLocker struct {
 	Ttl     int64
 	Conf    clientv3.Config
 	Key     string
@@ -17,11 +16,11 @@ type EtcdMutex struct {
 	txn     clientv3.Txn
 }
 
-func (em *EtcdMutex) init() (err error) {
+func (em *EtcdLocker) init() (err error) {
 	var client *clientv3.Client
 	client, err = clientv3.New(em.Conf)
 	if err != nil {
-		log.Errorf("EtcdMutex.init() clientv3.New error: %+v", err)
+		log.Errorf("EtcdLocker.init() clientv3.New error: %+v", err)
 		return
 	}
 
@@ -29,7 +28,7 @@ func (em *EtcdMutex) init() (err error) {
 	var leaseResp *clientv3.LeaseGrantResponse
 	leaseResp, err = em.lease.Grant(context.TODO(), em.Ttl)
 	if err != nil {
-		log.Errorf("EtcdMutex.init() em.lease.Grant error: %+v", err)
+		log.Errorf("EtcdLocker.init() em.lease.Grant error: %+v", err)
 		return
 	}
 	em.leaseId = leaseResp.ID
@@ -38,13 +37,13 @@ func (em *EtcdMutex) init() (err error) {
 	ctx, em.cancel = context.WithCancel(context.TODO())
 	_, err = em.lease.KeepAlive(ctx, em.leaseId)
 	if err != nil {
-		log.Errorf("EtcdMutex.init() em.lease.KeepAlive error: %+v", err)
+		log.Errorf("EtcdLocker.init() em.lease.KeepAlive error: %+v", err)
 		return
 	}
 	return
 }
 
-func (em *EtcdMutex) Lock() (err error) {
+func (em *EtcdLocker) Lock() (err error) {
 	err = em.init()
 	if err != nil {
 		return
@@ -54,28 +53,24 @@ func (em *EtcdMutex) Lock() (err error) {
 	var txnResp *clientv3.TxnResponse
 	txnResp, err = em.txn.Commit()
 	if err != nil {
-		log.Errorf("EtcdMutex.Lock() em.txn.Commit() error: %+v", err)
+		log.Errorf("EtcdLocker.Lock() em.txn.Commit() error: %+v", err)
 		return
 	}
 
 	if !txnResp.Succeeded {
-		log.Info("EtcdMutex.Lock() failed")
-		err = errors.New("lock failed, there is another thread which has not release the lock")
+		log.Info("EtcdLocker.Lock() failed")
+		err = ErrorLockerHasBeenUsed
 		return
 	}
-
-	log.Infof("EtcdMutex.Lock() lock key(%s) successfully", em.Key)
 	return
 }
 
-func (em *EtcdMutex) Unlock() {
+func (em *EtcdLocker) Unlock() {
 	var err error
 	em.cancel()
 	_, err = em.lease.Revoke(context.TODO(), em.leaseId)
 	if err != nil {
-		log.Errorf("EtcdMutex.Unlock() em.lease.Revoke error: %+v", err)
+		log.Errorf("EtcdLocker.Unlock() em.lease.Revoke error: %+v", err)
 		return
 	}
-
-	log.Info("unlock successful!")
 }

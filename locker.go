@@ -37,7 +37,7 @@ func (lock *Locker) WithKey(key string, ttl int64) {
 func (lock *Locker) Lock() (err error) {
 	switch lock.lockType {
 	case LockTypeEtcd:
-		mt := &EtcdMutex{
+		mt := &EtcdLocker{
 			Ttl: lock.ttl,
 			Conf: clientv3.Config{
 				Endpoints:   lock.serverList,

@@ -11,6 +11,7 @@ type Config struct {
 	Etcd      configEtcd      `yaml:"etcd"`
 	Redis     configRedis     `yaml:"redis"`
 	Zookeeper configZookeeper `yaml:"zookeeper"`
+	Consule   configConfule   `yaml:"consule"`
 }
 
 type configEtcd struct {
@@ -24,6 +25,11 @@ type configRedis struct {
 }
 
 type configZookeeper struct {
+	Servers   []string `yaml:"servers"`
+	DailTimes int64    `yaml:"dailtimes"`
+}
+
+type configConfule struct {
 	Servers   []string `yaml:"servers"`
 	DailTimes int64    `yaml:"dailtimes"`
 }
