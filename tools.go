@@ -9,7 +9,6 @@ func ServerListFromCfg(lockerType int) []string {
 	case LockTypeZk:
 		return Cfg.Zookeeper.Servers
 	}
-
 	return nil
 }
 

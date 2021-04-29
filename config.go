@@ -21,7 +21,7 @@ type configEtcd struct {
 
 type configRedis struct {
 	Servers   []string `yaml:"servers"`
-	DailTimes int64    `yaml:"dailtimes"`
+	DailTimes int64  `yaml:"dailtimes"`
 }
 
 type configZookeeper struct {

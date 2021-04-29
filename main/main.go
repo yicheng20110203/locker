@@ -13,14 +13,17 @@ func main() {
 		return
 	}
 
-	log.Infof("read yaml config: %+v", locker.Cfg)
+	// ETCD locker
+	etcd()
 
-	TT()
+	// redis locker
+	redis()
+
 	time.Sleep(time.Duration(5) * time.Second)
 }
 
 
-func TT() {
+func etcd() {
 	go func() {
 		lock1 := locker.NewLocker(locker.LockTypeEtcd)
 		lock1.WithKey("dy", 1)
@@ -28,10 +31,10 @@ func TT() {
 		defer lock1.Unlock()
 		time.Sleep(2 * time.Second)
 		if err != nil {
-			log.Errorf("go 1 lock error: %+v", err)
+			log.Errorf("etcd: go 1 lock error: %+v", err)
 			return
 		}
-		log.Info("go 1 lock success")
+		log.Info("etcd: go 1 lock success")
 	}()
 
 	go func() {
@@ -41,9 +44,37 @@ func TT() {
 		defer lock1.Unlock()
 		time.Sleep(2 * time.Second)
 		if err != nil {
-			log.Errorf("go 2 lock error: %+v", err)
+			log.Errorf("etcd: go 2 lock error: %+v", err)
 			return
 		}
-		log.Info("go 2 lock success")
+		log.Info("etcd: go 2 lock success")
+	}()
+}
+
+func redis() {
+	go func() {
+		lock1 := locker.NewLocker(locker.LockTypeRedis)
+		lock1.WithKey("dy", 10)
+		err := lock1.Lock()
+		defer lock1.Unlock()
+		time.Sleep(2 * time.Second)
+		if err != nil {
+			log.Errorf("redis: go 1 lock error: %+v", err)
+			return
+		}
+		log.Info("redis: go 1 lock success")
+	}()
+
+	go func() {
+		lock1 := locker.NewLocker(locker.LockTypeRedis)
+		lock1.WithKey("dy", 10)
+		err := lock1.Lock()
+		defer lock1.Unlock()
+		time.Sleep(2 * time.Second)
+		if err != nil {
+			log.Errorf("redis: go 2 lock error: %+v", err)
+			return
+		}
+		log.Info("redis: go 2 lock success")
 	}()
 }

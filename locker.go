@@ -3,6 +3,7 @@ package locker
 import (
 	"github.com/coreos/etcd/clientv3"
 	log "github.com/sirupsen/logrus"
+	"sync"
 	"time"
 )
 
@@ -20,8 +21,8 @@ type Locker struct {
 	mutex       ILocker
 }
 
-func NewLocker(lockType int) (resp *Locker) {
-	resp = &Locker{
+func NewLocker(lockType int) (lock *Locker) {
+	lock = &Locker{
 		lockType:    lockType,
 		serverList:  ServerListFromCfg(lockType),
 		dailTimeout: DailTimeoutFromCfg(lockType),
@@ -34,7 +35,14 @@ func (lock *Locker) WithKey(key string, ttl int64) {
 	lock.ttl = ttl
 }
 
+var (
+	mut sync.Mutex
+)
+
 func (lock *Locker) Lock() (err error) {
+	mut.Lock()
+	defer mut.Unlock()
+
 	switch lock.lockType {
 	case LockTypeEtcd:
 		mt := &EtcdLocker{
@@ -50,6 +58,16 @@ func (lock *Locker) Lock() (err error) {
 			log.Errorf("Locker.Lock() mt.init() error: %+v", err)
 			return
 		}
+		lock.mutex = mt
+		err = mt.Lock()
+		return
+	case LockTypeRedis:
+		mt := &RedisLocker{
+			Ttl:    lock.ttl,
+			Key:    lock.key,
+			Server: lock.serverList,
+		}
+		mt.init()
 		lock.mutex = mt
 		err = mt.Lock()
 		return
